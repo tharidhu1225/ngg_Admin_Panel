@@ -191,7 +191,7 @@ export default function Dashboard () {
             </button>
             <button
               className="btn-blue"
-              onClick={() => context.setIsOpentFullScreenPanel({ open: true, model: "Add Jewellery" })}
+              onClick={() => context.setIsOpentFullScreenPanel({ open: true, model: "Add Juwellery" })}
             >
               + Add Jewellery
             </button>
