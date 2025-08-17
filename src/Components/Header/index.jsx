@@ -5,14 +5,13 @@ import Button from '@mui/material/Button';
 import Badge from '@mui/material/Badge';
 import { styled } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
-import { GrUserAdmin } from "react-icons/gr";
+import { FcOvertime } from "react-icons/fc";
 import { IoIosNotificationsOutline } from "react-icons/io";
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Divider from '@mui/material/Divider';
 import { FaRegUser } from "react-icons/fa";
 import { IoMdLogOut } from "react-icons/io";
-import { FcOvertime } from "react-icons/fc";
 import { Link, useNavigate } from "react-router-dom";
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
@@ -29,6 +28,20 @@ export default function Header() {
   const navigate = useNavigate();
 
   const { user, setUser, isLogin, setIsLogin } = context;
+
+  // ✅ Safe fallback user to avoid undefined issues
+  const fallbackUser = {
+    name: "Unknown User",
+    email: "No email",
+    avatar: "https://cdn-icons-png.flaticon.com/512/3781/3781986.png"
+  };
+
+  const safeUser = {
+    name: user?.name || fallbackUser.name,
+    email: user?.email || fallbackUser.email,
+    avatar: user?.avatar || fallbackUser.avatar
+  };
+
   const [anchorMyAcc, setAnchorMyAcc] = useState(null);
   const openMyAcc = Boolean(anchorMyAcc);
 
@@ -54,7 +67,6 @@ export default function Header() {
     }
   };
 
-  // 🕒 Time
   const [time, setTime] = useState(new Date());
   useEffect(() => {
     const interval = setInterval(() => setTime(new Date()), 1000);
@@ -68,11 +80,7 @@ export default function Header() {
     const checkAuth = async () => {
       try {
         const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/user/user-details`, {
-          withCredentials: true,
-          cache: 'no-cache',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          withCredentials: true
         });
 
         if (res.data.success) {
@@ -87,15 +95,6 @@ export default function Header() {
 
     checkAuth();
   }, []);
-
-  // 🧱 Fallback user details if user is undefined or null
-  const fallbackUser = {
-    name: "Unknown User",
-    email: "No email",
-    avatar: "https://cdn-icons-png.flaticon.com/512/3781/3781986.png"
-  };
-
-  const safeUser = user || fallbackUser;
 
   return (
     <header className="w-full h-[auto] py-2 pl-64 shadow-md pr-7 bg-[#fff] flex items-center justify-between">
@@ -113,7 +112,7 @@ export default function Header() {
           </StyledBadge>
         </IconButton>
 
-        {isLogin && user ? (
+        {isLogin && user && typeof user === 'object' ? (
           <div className="relative">
             <div
               className="rounded-full w-[35px] h-[35px] overflow-hidden cursor-pointer"
