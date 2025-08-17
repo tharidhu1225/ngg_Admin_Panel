@@ -69,10 +69,7 @@ export default function Header() {
       try {
         const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/user/user-details`, {
           withCredentials: true,
-          cache: 'no-cache',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          cache: 'no-store'
         });
 
         if (res.data.success) {
@@ -87,15 +84,6 @@ export default function Header() {
 
     checkAuth();
   }, []);
-
-  // 🧱 Fallback user details if user is undefined or null
-  const fallbackUser = {
-    name: "Unknown User",
-    email: "No email",
-    avatar: "https://cdn-icons-png.flaticon.com/512/3781/3781986.png"
-  };
-
-  const safeUser = user || fallbackUser;
 
   return (
     <header className="w-full h-[auto] py-2 pl-64 shadow-md pr-7 bg-[#fff] flex items-center justify-between">
@@ -120,7 +108,7 @@ export default function Header() {
               onClick={handleClickMyAcc}
             >
               <img
-                src={safeUser.avatar}
+                src={user?.avatar || "https://cdn-icons-png.flaticon.com/512/3781/3781986.png"}
                 className="w-full h-full object-cover"
                 alt="User Avatar"
               />
@@ -161,14 +149,14 @@ export default function Header() {
                 <div className="flex items-center gap-3">
                   <div className="rounded-full w-[35px] h-[35px] overflow-hidden">
                     <img
-                      src={safeUser.avatar}
+                      src={user?.avatar || "https://cdn-icons-png.flaticon.com/512/3781/3781986.png"}
                       className="w-full h-full object-cover"
                       alt="User Avatar"
                     />
                   </div>
                   <div className="info">
-                    <h3 className="text-[15px] font-[500] leading-5">{safeUser.name}</h3>
-                    <p className="text-[12px] font-[400] opacity-70">{safeUser.email}</p>
+                    <h3 className="text-[15px] font-[500] leading-5">{user?.name || "Unknown User"}</h3>
+                    <p className="text-[12px] font-[400] opacity-70">{user?.email || "No email"}</p>
                   </div>
                 </div>
               </MenuItem>
