@@ -28,7 +28,6 @@ export default function Header() {
   const context = useContext(Mycontext);
   const navigate = useNavigate();
 
-  
   const { user, setUser, isLogin, setIsLogin } = context;
   const [anchorMyAcc, setAnchorMyAcc] = useState(null);
   const openMyAcc = Boolean(anchorMyAcc);
@@ -42,24 +41,20 @@ export default function Header() {
   };
 
   const handleLogout = async () => {
-  try {
-    // 🔐 Make API call to logout endpoint
-    await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/user/logout`, {
-      withCredentials: true, // 🍪 Required to send cookies
-    });
+    try {
+      await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/user/logout`, {
+        withCredentials: true,
+      });
 
-    // 🧹 Clear context data
-    setIsLogin(false);
-    setUser(null);
+      setIsLogin(false);
+      setUser(null);
+      navigate("/login");
+    } catch (err) {
+      console.error("Logout error", err);
+    }
+  };
 
-    // 🔄 Redirect to login page
-    navigate("/login");
-  } catch (err) {
-    console.error("Logout error", err);
-  }
-};
-
-  // 🕒 clock
+  // 🕒 Time
   const [time, setTime] = useState(new Date());
   useEffect(() => {
     const interval = setInterval(() => setTime(new Date()), 1000);
@@ -68,26 +63,26 @@ export default function Header() {
   const formattedTime = time.toLocaleTimeString();
   const formattedDate = time.toLocaleDateString();
 
+  // 🔐 Auth Check
   useEffect(() => {
-  const checkAuth = async () => {
-    try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/user/user-details`, {
-        withCredentials: true
-      });
+    const checkAuth = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/user/user-details`, {
+          withCredentials: true
+        });
 
-      if (res.data.success) {
-        setIsLogin(true);
-        setUser(res.data.data);
+        if (res.data.success) {
+          setIsLogin(true);
+          setUser(res.data.data);
+        }
+      } catch (err) {
+        setIsLogin(false);
+        setUser(null);
       }
-    } catch (err) {
-      setIsLogin(false);
-      setUser(null);
-    }
-  };
+    };
 
-  checkAuth();
-}, []);
-
+    checkAuth();
+  }, []);
 
   return (
     <header className="w-full h-[auto] py-2 pl-64 shadow-md pr-7 bg-[#fff] flex items-center justify-between">
@@ -99,90 +94,93 @@ export default function Header() {
       </div>
 
       <div className="part2 w-[40%] flex items-center justify-end gap-5">
-        <IconButton aria-label="cart">
+        <IconButton aria-label="notifications">
           <StyledBadge badgeContent={4} color="secondary">
             <IoIosNotificationsOutline />
           </StyledBadge>
         </IconButton>
 
-        {
-          context.isLogin && user ? (
-            <div className="relative">
-              <div className="rounded-full w-[35px] h-[35px] overflow-hidden cursor-pointer" onClick={handleClickMyAcc}>
-                <img
-                  src={user.avatar || "https://cdn-icons-png.flaticon.com/512/3781/3781986.png"}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+        {isLogin && user ? (
+          <div className="relative">
+            <div
+              className="rounded-full w-[35px] h-[35px] overflow-hidden cursor-pointer"
+              onClick={handleClickMyAcc}
+            >
+              <img
+                src={user?.avatar || "https://cdn-icons-png.flaticon.com/512/3781/3781986.png"}
+                className="w-full h-full object-cover"
+                alt="User Avatar"
+              />
+            </div>
 
-              <Menu
-                anchorEl={anchorMyAcc}
-                id="account-menu"
-                open={openMyAcc}
-                onClose={handleCloseMyAcc}
-                onClick={handleCloseMyAcc}
-                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                slotProps={{
-                  paper: {
-                    elevation: 0,
-                    sx: {
-                      overflow: 'visible',
-                      filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-                      mt: 1.5,
-                      '&::before': {
-                        content: '""',
-                        display: 'block',
-                        position: 'absolute',
-                        top: 0,
-                        right: 14,
-                        width: 10,
-                        height: 10,
-                        bgcolor: 'background.paper',
-                        transform: 'translateY(-50%) rotate(45deg)',
-                        zIndex: 0,
-                      },
+            <Menu
+              anchorEl={anchorMyAcc}
+              id="account-menu"
+              open={openMyAcc}
+              onClose={handleCloseMyAcc}
+              onClick={handleCloseMyAcc}
+              transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+              anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+              slotProps={{
+                paper: {
+                  elevation: 0,
+                  sx: {
+                    overflow: 'visible',
+                    filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+                    mt: 1.5,
+                    '&::before': {
+                      content: '""',
+                      display: 'block',
+                      position: 'absolute',
+                      top: 0,
+                      right: 14,
+                      width: 10,
+                      height: 10,
+                      bgcolor: 'background.paper',
+                      transform: 'translateY(-50%) rotate(45deg)',
+                      zIndex: 0,
                     },
                   },
-                }}
-              >
-                <MenuItem onClick={handleCloseMyAcc}>
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-full w-[35px] h-[35px] overflow-hidden">
-                      <img
-                        src={user.avatar || "https://cdn-icons-png.flaticon.com/512/3781/3781986.png"}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="info">
-                      <h3 className="text-[15px] font-[500] leading-5">{user.name}</h3>
-                      <p className="text-[12px] font-[400] opacity-70">{user.email}</p>
-                    </div>
+                },
+              }}
+            >
+              <MenuItem onClick={handleCloseMyAcc}>
+                <div className="flex items-center gap-3">
+                  <div className="rounded-full w-[35px] h-[35px] overflow-hidden">
+                    <img
+                      src={user?.avatar || "https://cdn-icons-png.flaticon.com/512/3781/3781986.png"}
+                      className="w-full h-full object-cover"
+                      alt="User Avatar"
+                    />
                   </div>
-                </MenuItem>
+                  <div className="info">
+                    <h3 className="text-[15px] font-[500] leading-5">{user?.name || "Unknown User"}</h3>
+                    <p className="text-[12px] font-[400] opacity-70">{user?.email || "No email"}</p>
+                  </div>
+                </div>
+              </MenuItem>
 
-                <Divider />
+              <Divider />
 
-                <MenuItem className="flex items-center gap-3">
-                  <FaRegUser className="text-[16px]" />
-                  <span className="text-[14px]">Profile</span>
-                </MenuItem>
+              <MenuItem className="flex items-center gap-3">
+                <FaRegUser className="text-[16px]" />
+                <span className="text-[14px]">Profile</span>
+              </MenuItem>
 
-                <Divider />
-                <MenuItem onClick={handleLogout} className="flex items-center gap-3">
-                  <IoMdLogOut className="text-[18px]" />
-                  <span className="text-[14px]">Sign Out</span>
-                </MenuItem>
-              </Menu>
-            </div>
-          ) : (
-            <div>
-              <Link to="/login">
-                <Button className="btn-blue btn-sm !rounded-full">Sign In</Button>
-              </Link>
-            </div>
-          )
-        }
+              <Divider />
+              <MenuItem onClick={handleLogout} className="flex items-center gap-3">
+                <IoMdLogOut className="text-[18px]" />
+                <span className="text-[14px]">Sign Out</span>
+              </MenuItem>
+            </Menu>
+          </div>
+        ) : (
+          <div>
+            <Link to="/login">
+              <Button className="btn-blue btn-sm !rounded-full">Sign In</Button>
+            </Link>
+          </div>
+        )}
       </div>
     </header>
   );
