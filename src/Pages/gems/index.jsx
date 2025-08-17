@@ -28,7 +28,7 @@ export default function Gems() {
 
   const [categoryFilterValue, setCategoryFilterValue] = useState('');
   const [searchValue, setSearchValue] = useState('');
-  const [gems, setGems] = useState([]);
+  const [gems, setGems] = useState([]); // always an array
   const [categories, setCategories] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -40,7 +40,7 @@ export default function Gems() {
   const fetchCategories = async () => {
     try {
       const res = await axios.get(`${baseURL}/api/gemCat`);
-      if (res.data.success) setCategories(res.data.categories);
+      if (res.data.success) setCategories(res.data.categories || []);
     } catch (err) {
       console.error("Failed to fetch categories", err);
     }
@@ -65,13 +65,14 @@ export default function Gems() {
       });
 
       if (res.data.success) {
-        setGems(res.data.gems);
-        setTotalCount(res.data.totalCount || res.data.gems.length);
+        setGems(res.data.gems || []); // ✅ fallback to empty array
+        setTotalCount(res.data.totalCount || (res.data.gems?.length || 0));
       } else {
         setGems([]);
       }
     } catch (error) {
       console.error("Error fetching gems:", error);
+      setGems([]);
     }
     setLoading(false);
   };
@@ -178,7 +179,7 @@ export default function Gems() {
                   <TableRow>
                     <TableCell colSpan={columns.length + 1} align="center">Loading...</TableCell>
                   </TableRow>
-                ) : gems.length === 0 ? (
+                ) : Array.isArray(gems) && gems.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={columns.length + 1} align="center">No gems found.</TableCell>
                   </TableRow>
