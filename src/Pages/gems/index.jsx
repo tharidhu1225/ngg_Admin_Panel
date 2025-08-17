@@ -46,7 +46,7 @@ export default function Gems() {
     }
   };
 
-  const fetchGems = async () => {
+const fetchGems = async () => {
     setLoading(true);
     try {
       const params = {
@@ -58,24 +58,23 @@ export default function Gems() {
 
       Object.keys(params).forEach(key => params[key] === undefined && delete params[key]);
 
-      const query = new URLSearchParams(params).toString();
-
-      const res = await axios.get(`${baseURL}/api/gem?${query}`, {
+      const res = await axios.get(`${baseURL}/api/gem`, {
         withCredentials: true,
+        params,
       });
 
       if (res.data.success) {
-        setGems(res.data.gems || []); // ✅ fallback to empty array
-        setTotalCount(res.data.totalCount || (res.data.gems?.length || 0));
+        setGems(res.data.data || []);
+        setTotalCount(res.data.totalCount || res.data.data.length);
       } else {
         setGems([]);
       }
     } catch (error) {
-      console.error("Error fetching gems:", error);
-      setGems([]);
+      console.error("Error fetching gem:", error);
     }
     setLoading(false);
   };
+
 
   useEffect(() => {
     fetchCategories();
