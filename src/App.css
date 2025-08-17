@@ -1,0 +1,47 @@
+body{font-family: "Montserrat", sans-serif; background: #f1f1f1;}
+.MuiBadge-badge {background: #ff5252 !important;}
+
+.ReactCollapse--collapse {
+  transition: height 300ms;
+}
+
+::-webkit-scrollbar{width: 10px !important; height: 10px !important;}
+::-webkit-scrollbar-thumb{background: #555454 !important;}
+
+.btn{padding: 8px 20px !important;}
+.btn svg{font-size: 20px;}
+.btn-blue{background: #3872fa !important; color: #fff !important; padding: 8px 20px !important;}
+.btn-blue:hover{background: #2753bc !important;}
+.btn-sm{padding: 6px 20px !important; font-size: 13px !important;}
+.btn-lg{padding: 8px 20px !important; font-size: 16px !important;}
+
+th.MuiTableCell-root{@apply bg-[#d6d5d5] py-1}
+
+a.active button{background: #f7f4f4 !important;}
+
+.MuiButton-icon svg{font-size: 27px !important;}
+
+.css-rizt0-MuiTypography-root{font-size: 14px !important;}
+
+.MuiAppBar-colorPrimary{background: #e6e6e6 !important;}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.MuiSelect-select{background: #fff !important;}
+
+.MuiDialog-paper{background: #f9fafb !important;}
+
+.otpBox input{border: 1px solid rgba(0,0,0,0.3) !important; outline: none !important; border-radius: 4px;}
+.otpBox input:focus{border: 1px solid rgba(0,0,0,0.7) !important;}
+.otpPage .container{height: 90vh; display: flex;}
+
+.MuiTableBody-root tr:nth-child(even){background: #EAE4D5 !important;}

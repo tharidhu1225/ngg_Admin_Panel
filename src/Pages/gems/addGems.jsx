@@ -1,0 +1,216 @@
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import {
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
+} from "@mui/material";
+import toast from "react-hot-toast";
+
+export default function AddGems() {
+  const [gemData, setGemData] = useState({
+    name: "",
+    description: "",
+    price: "",
+    stock: "",
+    weight: "",
+    category: "",
+  });
+
+  const [images, setImages] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCatName, setSelectedCatName] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // Fetch categories
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/gemCat`,
+          { withCredentials: true }
+        );
+        if (res.data.success) setCategories(res.data.categories);
+        else toast.error("Failed to fetch categories");
+      } catch (err) {
+        console.error(err);
+        toast.error("Error fetching categories");
+      }
+    }
+
+    fetchCategories();
+  }, []);
+
+  const handleChange = (e) => {
+    setGemData({ ...gemData, [e.target.name]: e.target.value });
+  };
+
+  // Submit form with image upload
+  const handleSubmit = async () => {
+    const { name, price, weight, category } = gemData;
+
+    if (!name || !price || !weight || !category || images.length === 0) {
+      toast.error("Please fill all required fields and upload at least one image.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Step 1: Upload images
+      const formData = new FormData();
+      images.forEach((img) => formData.append("images", img));
+
+      const uploadRes = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/gem/uploadImages`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true,
+        }
+      );
+
+      const uploadedImageUrls = uploadRes.data.images;
+
+      if (!uploadRes.data.success || !uploadedImageUrls?.length) {
+        toast.error("Image upload failed.");
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: Submit gem data with image URLs
+      const res = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/gem/create`,
+        { ...gemData, images: uploadedImageUrls },
+        { withCredentials: true }
+      );
+
+      if (res.data.success) {
+        toast.success("Gem created successfully!");
+
+        // Reset form
+        setGemData({
+          name: "",
+          description: "",
+          price: "",
+          stock: "",
+          weight: "",
+          category: "",
+        });
+        setImages([]);
+        setSelectedCatName("");
+        window.location.reload();
+      } else {
+        toast.error("Failed to create gem.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("An error occurred.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section className="p-6 max-w-6xl mx-auto">
+      <h2 className="text-2xl font-bold mb-6">Add New Gem</h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <TextField name="name" label="Gem Name" value={gemData.name} onChange={handleChange} fullWidth required />
+        <TextField name="price" label="Price" type="number" value={gemData.price} onChange={handleChange} fullWidth required />
+        <TextField name="stock" label="Stock" type="number" value={gemData.stock} onChange={handleChange} fullWidth />
+        <TextField name="weight" label="Weight (g)" type="number" value={gemData.weight} onChange={handleChange} fullWidth required />
+
+        <FormControl fullWidth required>
+          <InputLabel>Main Category</InputLabel>
+          <Select
+            value={selectedCatName}
+            onChange={(e) => {
+              setSelectedCatName(e.target.value);
+              setGemData({ ...gemData, category: "" });
+            }}
+            label="Main Category"
+          >
+            <MenuItem value="">Select Main Category</MenuItem>
+            {[...new Set(categories.map((c) => c.catName))].map((mainCat, idx) => (
+              <MenuItem key={idx} value={mainCat}>{mainCat}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl fullWidth required>
+          <InputLabel>Sub Category</InputLabel>
+          <Select
+            name="category"
+            value={gemData.category}
+            onChange={handleChange}
+            label="Sub Category"
+            disabled={!selectedCatName}
+          >
+            <MenuItem value="">Select Sub Category</MenuItem>
+            {categories
+              .filter((c) => c.catName === selectedCatName)
+              .map((c) => (
+                <MenuItem key={c._id} value={c._id}>{c.name}</MenuItem>
+              ))}
+          </Select>
+        </FormControl>
+
+        <TextField
+          name="description"
+          label="Description"
+          value={gemData.description}
+          onChange={handleChange}
+          fullWidth
+          multiline
+          rows={3}
+        />
+      </div>
+
+      {/* Image Upload Section */}
+      <div className="mt-10">
+        <label className="block font-semibold mb-2">Upload Images</label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          {images.map((file, idx) => (
+            <div key={idx} className="relative">
+              <span
+                onClick={() => setImages((prev) => prev.filter((_, i) => i !== idx))}
+                className="absolute top-1 right-1 bg-red-700 text-white w-[20px] h-[20px] text-xs rounded-full flex items-center justify-center cursor-pointer z-50"
+              >✕</span>
+              <img src={URL.createObjectURL(file)} alt={`preview-${idx}`} className="w-full h-32 object-cover rounded-md border" />
+            </div>
+          ))}
+          <label className="cursor-pointer">
+            <div className="flex items-center justify-center border border-dashed bg-gray-100 hover:bg-gray-200 rounded-md h-32 w-full text-gray-600 text-sm">
+              + Upload
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              hidden
+              onChange={(e) => {
+                const fs = Array.from(e.target.files);
+                setImages((prev) => [...prev, ...fs]);
+              }}
+            />
+          </label>
+        </div>
+      </div>
+
+      {/* Submit Button */}
+      <Button
+        variant="contained"
+        color="primary"
+        className="mt-10"
+        onClick={handleSubmit}
+        disabled={loading}
+      >
+        {loading ? "Saving..." : "💾 Save Gem"}
+      </Button>
+    </section>
+  );
+}
