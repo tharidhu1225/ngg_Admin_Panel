@@ -66,32 +66,11 @@ export default function Login() {
 
   return (
     <section className="bg-white w-full h-full">
-      <header className="w-full fixed top-0 left-0 px-4 py-3 flex items-center justify-between z-50">
-        <Link to="/">
-          <img src="/logo.jpg" className="w-[150px]" />
-        </Link>
-
-        <div className="flex items-center gap-2">
-          <NavLink to="/login" exact="true" activeclassname="isActive">
-            <Button className="!rounded-full !text-[rgba(0,0,0,0.9)] !px-5 flex gap-2">
-              <LuLogIn className="text-[18px]" />
-              Login
-            </Button>
-          </NavLink>
-
-          <NavLink to="/sign-up" exact="true" activeclassname="isActive">
-            <Button className="!rounded-full !text-[rgba(0,0,0,0.9)] !px-5 flex gap-2">
-              <FaUserPlus className="text-[15px]" />
-              Sign up
-            </Button>
-          </NavLink>
-        </div>
-      </header>
       <img src="/pattern2.jpg" className="w-full fixed top-0 left-0 opacity-20" />
 
       <div className="loginBox card w-[600px] h-[auto] pb-20 mx-auto pt-20 relative z-50">
         <div className="text-center">
-          <img src="icon.png" className="m-auto w-[150px]" />
+          <img src="/logo.jpg" className="m-auto w-[150px]" />
         </div>
 
         <h1 className="text-center text-[30px] text-[#191919] font-[800] mt-0">
@@ -99,42 +78,7 @@ export default function Login() {
           Sign in with your credentials.
         </h1>
 
-        <div className="flex items-center justify-center w-full mt-5 gap-4">
-          <LoadingButton
-            size="small"
-            onClick={handleClickGoolge}
-            endIcon={<FcGoogle />}
-            loading={loadingGoogle}
-            loadingPosition="end"
-            variant="outlined"
-            className="!bg-none !text-[rgb(0,0,0)] !text-[16px] !capitalize !px-5"
-          >
-            Sign In With Google
-          </LoadingButton>
-
-          <LoadingButton
-            size="small"
-            onClick={handleClickFb}
-            endIcon={<BsFacebook />}
-            loading={loadingFb}
-            loadingPosition="end"
-            variant="outlined"
-            className="!bg-none !text-[rgba(0,0,0)] !text-[16px] !capitalize !px-5"
-          >
-            Sign In With Facebook
-          </LoadingButton>
-        </div>
-
-        <br />
-
-        <div className="w-full flex items-center justify-center gap-3">
-          <span className="flex items-center w-[100px] h-[1px] bg-[rgba(0,0,0,0.2)]"></span>
-          <span className="text-[15px] font-[500]">Or, Sign in with your email</span>
-          <span className="flex items-center w-[100px] h-[1px] bg-[rgba(0,0,0,0.2)]"></span>
-        </div>
-
-        <br />
-
+        <div className="flex items-center justify-between mt-5">
         <form className="w-full px-8 mt-3" onSubmit={handleLogin}>
           {errorMsg && (
             <div className="text-red-600 font-[600] mb-4">{errorMsg}</div>
@@ -178,13 +122,6 @@ export default function Login() {
               control={<Checkbox defaultChecked />}
               label="Remember Me"
             />
-
-            <Link
-              to="/forgot-password"
-              className="text-primary font-[700] text-[15px] hover:underline hover:text-gray-600"
-            >
-              Forgot Password?
-            </Link>
           </div>
 
           <LoadingButton
@@ -192,11 +129,12 @@ export default function Login() {
             type="submit"
             variant="contained"
             fullWidth
-            className="!bg-blue-600 hover:!bg-blue-700 !text-white !py-3 !rounded-md !text-[16px] !capitalize"
+            className="py-3 text-lg font-semibold"
           >
             Sign In
           </LoadingButton>
         </form>
+      </div>
       </div>
     </section>
   );
