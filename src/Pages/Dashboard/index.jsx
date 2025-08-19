@@ -1,9 +1,8 @@
-import React, { useState , PureComponent, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import DashboardBoxes from "../../Components/DashboardBoxes";
 import { Button } from "@mui/material";
 import { FiPlus } from "react-icons/fi";
-import { FaAngleDown } from "react-icons/fa";
-import { FaAngleUp } from "react-icons/fa";
+import { FaAngleDown, FaAngleUp } from "react-icons/fa";
 import Badge from "../../Components/Badge";
 import Checkbox from '@mui/material/Checkbox';
 import { Link } from "react-router-dom";
@@ -12,51 +11,20 @@ import { AiOutlineEdit } from "react-icons/ai";
 import { LuEye } from "react-icons/lu";
 import { VscTrash } from "react-icons/vsc";
 import Pagination from '@mui/material/Pagination';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
-{/*Material UI Table Dependancies */}
-
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import { PiExportBold } from "react-icons/pi";
-import { Mycontext } from "../../App";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import Gems from "../gems";
+import { Mycontext } from "../../App";
+import axios from "axios";  // Axios import missing in your original
 
 const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
 
-{/*Path For Material UI*/}
-
 const columns = [
-  
   { id: 'product', label: 'PRODUCT', minWidth: 150 },
   { id: 'category', label: 'CATEGORY', minWidth: 100 },
-  {
-    id: 'subcategoty',
-    label: 'SUB CATEGORY',
-    minWidth: 150,
-  },
-  {
-    id: 'price',
-    label: 'PRICE',
-    minWidth: 100,
-  },
-  {
-    id: 'sales',
-    label: 'SALES',
-    minWidth: 80,
-  },
-  {
-    id: 'action',
-    label: 'ACTION',
-    minWidth: 120,
-  },
+  { id: 'subcategoty', label: 'SUB CATEGORY', minWidth: 150 },
+  { id: 'price', label: 'PRICE', minWidth: 100 },
+  { id: 'sales', label: 'SALES', minWidth: 80 },
+  { id: 'action', label: 'ACTION', minWidth: 120 },
 ];
 
 function createData(name, code, population, size) {
@@ -64,94 +32,56 @@ function createData(name, code, population, size) {
   return { name, code, population, size, density };
 }
 
+export default function Dashboard() {
 
+  const context = useContext(Mycontext);  // <=== useContext inside function
+  const { user, setUser } = context;
 
-export default function Dashboard () {
+  const [isLogin, setIsLogin] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [categoruFilterValue, setCategoruFilterValue] = useState('');
+  const [isOpenOrderdProduct, setIsOpenOrderdProduct] = useState(null);
 
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [chartData, setChartData] = useState([
+    { name: 'JAN', TotalSales: 4000, TotalUsers: 2400, amt: 2400 },
+    { name: 'FEB', TotalSales: 3000, TotalUsers: 1398, amt: 2210 },
+    { name: 'MARCH', TotalSales: 2000, TotalUsers: 9800, amt: 2290 },
+    { name: 'APRIL', TotalSales: 2780, TotalUsers: 3908, amt: 2000 },
+    { name: 'MAY', TotalSales: 1890, TotalUsers: 4800, amt: 2181 },
+    { name: 'JUNE', TotalSales: 2390, TotalUsers: 3800, amt: 2500 },
+    { name: 'JULY', TotalSales: 3490, TotalUsers: 1200, amt: 2100 },
+    { name: 'AUG', TotalSales: 2590, TotalUsers: 7800, amt: 2100 },
+    { name: 'SEP', TotalSales: 2490, TotalUsers: 9300, amt: 2100 },
+    { name: 'OCT', TotalSales: 6490, TotalUsers: 4300, amt: 2100 },
+    { name: 'NOV', TotalSales: 1490, TotalUsers: 8300, amt: 2100 },
+    { name: 'DEC', TotalSales: 333, TotalUsers: 1776, amt: 2100 },
+  ]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/user/user-details`, {
+          withCredentials: true,
+          cache: 'no-store'
+        });
+
+        if (res.data.success) {
+          setIsLogin(true);
+          setUser(res.data.data);
+        }
+      } catch (err) {
+        setIsLogin(false);
+        setUser(null);
+      }
+    };
+
+    checkAuth();
+  }, [setUser]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
-
-
-  const [categoruFilterValue, setCategoruFilterValue] = useState('');
-
-  const [chartData , setChartData] = useState([
-  {
-    name: 'JAN',
-    TotalSales: 4000,
-    TotalUsers: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'FEB',
-    TotalSales: 3000,
-    TotalUsers: 1398,
-    amt: 2210,
-  },
-  {
-    name: 'MARCH',
-    TotalSales: 2000,
-    TotalUsers: 9800,
-    amt: 2290,
-  },
-  {
-    name: 'APRIL',
-    TotalSales: 2780,
-    TotalUsers: 3908,
-    amt: 2000,
-  },
-  {
-    name: 'MAY',
-    TotalSales: 1890,
-    TotalUsers: 4800,
-    amt: 2181,
-  },
-  {
-    name: 'JUNE',
-    TotalSales: 2390,
-    TotalUsers: 3800,
-    amt: 2500,
-  },
-  {
-    name: 'JULY',
-    TotalSales: 3490,
-    TotalUsers: 1200,
-    amt: 2100,
-  },
-  {
-    name: 'AUG',
-    TotalSales: 2590,
-    TotalUsers: 7800,
-    amt: 2100,
-  },
-  {
-    name: 'SEP',
-    TotalSales: 2490,
-    TotalUsers: 9300,
-    amt: 2100,
-  },
-  {
-    name: 'OCT',
-    TotalSales: 6490,
-    TotalUsers: 4300,
-    amt: 2100,
-  },
-  {
-    name: 'NOV',
-    TotalSales: 1490,
-    TotalUsers: 8300,
-    amt: 2100,
-  },
-  {
-    name: 'DEC',
-    TotalSales: 333,
-    TotalUsers: 1776,
-    amt: 2100,
-  },
-]);
 
   const handleChangeCatFilter = (event) => {
     setCategoruFilterValue(event.target.value);
@@ -162,27 +92,25 @@ export default function Dashboard () {
     setPage(0);
   };
 
-    const [isOpenOrderdProduct , setIsOpenOrderdProduct] = useState(null);
-    
-        const isShowOrderdProduct=(index)=>{
-            if(isOpenOrderdProduct===index){
-               setIsOpenOrderdProduct(null); 
-            }else{
-                setIsOpenOrderdProduct(index);
-            }
-        }
+  const isShowOrderdProduct = (index) => {
+    if (isOpenOrderdProduct === index) {
+      setIsOpenOrderdProduct(null);
+    } else {
+      setIsOpenOrderdProduct(index);
+    }
+  };
 
-    const context = useContext(Mycontext)
+  return (
+    <>
+      <div className="w-full bg-[#fafafa] shadow-md py-2 px-5 p-5 border border-[rgba(0,0,0,0.1)] flex items-center gap-8 mb-5 justify-between rounded-md">
+        <div className="info">
+          <h1 className="text-[35px] font-bold leading-10 mb-3">
+            Good Morning,<br /> {user?.name || "Admin"}.
+          </h1>
+          <p>Here's What happening on your store today. See the statistics at once.</p>
 
-    return(
-        <>
-          <div className="w-full bg-[#fafafa] shadow-md py-2 px-5 p-5 border border-[rgba(0,0,0,0.1)] flex items-center gap-8 mb-5 justify-between rounded-md">
-            <div className="info">
-                <h1 className="text-[35px] font-bold leading-10 mb-3">Good Morning,<br/> Tharidu.</h1>
-                <p>Here's What happening on your store today. See the statistics a once.</p>
-                 
-                 <br/>
-                 <div className="mt-4 space-x-3">
+          <br />
+          <div className="mt-4 space-x-3">
             <button
               className="btn-blue"
               onClick={() => context.setIsOpentFullScreenPanel({ open: true, model: "Add Gems" })}
@@ -196,15 +124,12 @@ export default function Dashboard () {
               + Add Jewellery
             </button>
           </div>
-                            
-            </div>
+        </div>
 
-            <img src="shop-illustration.webp" className="w-[250px]"/>
+        <img src="shop-illustration.webp" className="w-[250px]" />
+      </div>
 
-          </div>
-
-
-          <DashboardBoxes/>
+      <DashboardBoxes />
 
            {/*Product Table Material UI*/}
 

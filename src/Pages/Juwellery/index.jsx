@@ -83,24 +83,26 @@ export default function JewelleryList() {
   }, [categoryFilterValue, searchValue, page, rowsPerPage]);
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this item?")) return;
+  const confirm = window.confirm("Are you sure you want to delete this item?");
+  if (!confirm) return;
 
-    try {
-      const res = await axios.delete(`${baseURL}/api/jewellery/${id}`, {
-        withCredentials: true,
-      });
+  try {
+    const res = await axios.delete(`${baseURL}/api/jewellery/${id}`, {
+      withCredentials: true,
+    });
 
-      if (res.data.success) {
-        toast.success("Item deleted successfully.");
-        fetchJewellery();
-      } else {
-        toast.error("Failed to delete item.");
-      }
-    } catch (err) {
-      console.error("Delete error:", err);
-      toast.error("Something went wrong.");
+    if (res.data.success) {
+      toast.success("Item deleted successfully.");
+      fetchJewellery(); // Refresh list
+    } else {
+      toast.error(res.data.message || "Failed to delete item.");
     }
-  };
+  } catch (err) {
+    console.error("Delete error:", err);
+    toast.error("Something went wrong while deleting.");
+  }
+};
+
 
   const handleChangePage = (event, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (event) => {
