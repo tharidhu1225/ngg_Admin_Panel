@@ -55,8 +55,11 @@ export default function JuwellerryCatList() {
     const confirm = window.confirm("Are you sure you want to delete this category?");
     if (!confirm) return;
 
+    const token = localStorage.getItem("token")
+
     try {
       await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/jewelleryCat/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
             withCredentials: true,
           });
       // After delete, refetch or filter out

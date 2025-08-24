@@ -79,6 +79,22 @@ export default function Dashboard() {
     checkAuth();
   }, [setUser]);
 
+  const [greeting, setGreeting] = useState("");
+
+  useEffect(() => {
+    const updateGreeting = () => {
+      const hour = new Date().getHours();
+      if (hour < 12) setGreeting("Good Morning");
+      else if (hour < 18) setGreeting("Good Afternoon");
+      else setGreeting("Good Evening");
+    };
+
+    updateGreeting(); // initial set
+    const interval = setInterval(updateGreeting, 60000); // update every 1 min
+
+    return () => clearInterval(interval); // cleanup
+  }, []);
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -105,7 +121,7 @@ export default function Dashboard() {
       <div className="w-full bg-[#fafafa] shadow-md py-2 px-5 p-5 border border-[rgba(0,0,0,0.1)] flex items-center gap-8 mb-5 justify-between rounded-md">
         <div className="info">
           <h1 className="text-[35px] font-bold leading-10 mb-3">
-            Good Morning,<br /> {user?.name || "Admin"}.
+            {greeting},<br /> {user?.name || "Admin"}.
           </h1>
           <p>Here's What happening on your store today. See the statistics at once.</p>
 

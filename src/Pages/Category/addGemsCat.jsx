@@ -1,4 +1,3 @@
-// Imports remain same
 import React, { useState } from "react";
 import Button from "@mui/material/Button";
 import { MdOutlineFileUpload } from "react-icons/md";
@@ -15,14 +14,13 @@ export default function AddGemCat() {
   const [previewImages, setPreviewImages] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const handleChangeProductCat = (event) => {
-    setProductCat(event.target.value);
-  };
+  const token = localStorage.getItem("token"); // get token
+
+  const handleChangeProductCat = (event) => setProductCat(event.target.value);
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
 
-    // Max 5 images validation
     if (files.length + images.length > 5) {
       toast.error("You can only upload up to 5 images.");
       return;
@@ -36,10 +34,8 @@ export default function AddGemCat() {
   const removeImage = (index) => {
     const updatedImages = [...images];
     const updatedPreviews = [...previewImages];
-
     updatedImages.splice(index, 1);
     updatedPreviews.splice(index, 1);
-
     setImages(updatedImages);
     setPreviewImages(updatedPreviews);
   };
@@ -50,10 +46,15 @@ export default function AddGemCat() {
       return;
     }
 
+    if (!token) {
+      toast.error("You must be logged in to perform this action.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // 1. Upload Images
+      // ---------------- Upload Images ----------------
       const formData = new FormData();
       images.forEach((image) => formData.append("images", image));
 
@@ -64,22 +65,27 @@ export default function AddGemCat() {
           withCredentials: true,
           headers: {
             "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`, // <--- attach token
           },
         }
       );
 
-      if (!uploadRes.data.success) {
-        throw new Error("Image upload failed");
-      }
+      if (!uploadRes.data.success) throw new Error("Image upload failed");
 
-      // 2. Create Category
+      // ---------------- Create Category ----------------
       const createRes = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/gemCat/create`,
         {
           catName: productCat,
           name: subCatName,
+          images: uploadRes.data.images, // send uploaded image URLs if backend returns them
         },
-        { withCredentials: true }
+        {
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${token}`, // <--- attach token
+          },
+        }
       );
 
       if (createRes.data.success) {
@@ -88,11 +94,10 @@ export default function AddGemCat() {
         setSubCatName('');
         setImages([]);
         setPreviewImages([]);
-        window.location.reload();
       }
     } catch (error) {
-      console.error("Error:", error.message);
-      toast.error(error.response?.data?.message || "Error occurred while creating category.");
+      console.error("Error:", error);
+      toast.error(error.response?.data?.message || error.message || "Error occurred");
     } finally {
       setLoading(false);
     }
@@ -100,22 +105,20 @@ export default function AddGemCat() {
 
   return (
     <section className="p-6 bg-gray-50">
-      <form className="form py-3 p-4" onSubmit={(e) => {
-        e.preventDefault();
-        handleSubmit();
-      }}>
+      <form
+        className="form py-3 p-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit();
+        }}
+      >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Gem Category */}
           <div>
             <label className="block text-sm font-medium mb-1 text-black">
               Gem Category
             </label>
-            <Select
-              size="small"
-              fullWidth
-              value={productCat}
-              onChange={handleChangeProductCat}
-            >
+            <Select size="small" fullWidth value={productCat} onChange={handleChangeProductCat}>
               <MenuItem value="">Select Category</MenuItem>
               <MenuItem value="Precious">Precious</MenuItem>
               <MenuItem value="Semi Precious">Semi Precious</MenuItem>
@@ -136,12 +139,9 @@ export default function AddGemCat() {
             />
           </div>
 
-          {/* Upload Box (Same as AddJuwellerryCat) */}
+          {/* Upload Box */}
           <div>
-            <label className="block text-sm font-medium mb-1 text-black">
-              Upload Images
-            </label>
-
+            <label className="block text-sm font-medium mb-1 text-black">Upload Images</label>
             <div className="grid grid-cols-3 gap-2">
               {previewImages.map((img, index) => (
                 <div className="uploadBoxWrapper relative" key={index}>
@@ -151,13 +151,8 @@ export default function AddGemCat() {
                   >
                     <IoCloseOutline className="text-white text-[17px]" />
                   </span>
-
                   <div className="uploadBox p-0 rounded-md overflow-hidden border border-dashed border-[rgba(0,0,0,0.5)] h-[90px] w-[100%] bg-gray-100 flex items-center justify-center flex-col relative">
-                    <img
-                      className="w-full h-full object-cover"
-                      alt={"preview"}
-                      src={img}
-                    />
+                    <img className="w-full h-full object-cover" alt="preview" src={img} />
                   </div>
                 </div>
               ))}
@@ -165,13 +160,7 @@ export default function AddGemCat() {
               <label className="uploadBoxWrapper cursor-pointer">
                 <div className="uploadBox p-0 rounded-md overflow-hidden border border-dashed border-[rgba(0,0,0,0.5)] h-[90px] w-[100%] bg-gray-100 flex items-center justify-center flex-col relative hover:bg-gray-200">
                   <span className="text-sm text-gray-600">+ Upload</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    hidden
-                    onChange={handleImageChange}
-                  />
+                  <input type="file" accept="image/*" multiple hidden onChange={handleImageChange} />
                 </div>
               </label>
             </div>

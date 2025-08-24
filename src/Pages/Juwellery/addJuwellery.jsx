@@ -22,8 +22,9 @@ export default function AddJuwellery() {
 
   const [images, setImages] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [selectedCatName, setSelectedCatName] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const token = localStorage.getItem("token"); // Auth token
 
   // Fetch categories
   useEffect(() => {
@@ -40,7 +41,6 @@ export default function AddJuwellery() {
         toast.error("Error fetching categories");
       }
     }
-
     fetchCategories();
   }, []);
 
@@ -56,10 +56,19 @@ export default function AddJuwellery() {
       return;
     }
 
-    try {
-      setLoading(true);
+    if (!token) {
+      toast.error("You must be logged in to perform this action.");
+      return;
+    }
 
-      // 1. Upload images
+    if (images.length > 5) {
+      toast.error("You can upload a maximum of 5 images.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // ---------------- Upload Images ----------------
       const formData = new FormData();
       images.forEach((img) => formData.append("images", img));
 
@@ -67,30 +76,34 @@ export default function AddJuwellery() {
         `${import.meta.env.VITE_BACKEND_URL}/api/jewellery/uploadImages`,
         formData,
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
           withCredentials: true,
         }
       );
 
-      const uploadedImageUrls = uploadRes.data.images;
-
-      if (!uploadRes.data.success || !uploadedImageUrls?.length) {
+      if (!uploadRes.data.success || !uploadRes.data.images?.length) {
         toast.error("Image upload failed.");
         setLoading(false);
         return;
       }
 
-      // 2. Submit juwellery data
+      const uploadedImageUrls = uploadRes.data.images;
+
+      // ---------------- Submit Jewellery ----------------
       const res = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/jewellery/create`,
         { ...juwellerryData, images: uploadedImageUrls },
-        { withCredentials: true }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        }
       );
 
       if (res.data.success) {
         toast.success("Jewellery created successfully!");
-
-        // Reset form
         setJuwellerryData({
           name: "",
           description: "",
@@ -100,14 +113,12 @@ export default function AddJuwellery() {
           category: "",
         });
         setImages([]);
-        setSelectedCatName("");
-        window.location.reload();
       } else {
         toast.error("Failed to create jewellery.");
       }
     } catch (err) {
       console.error(err);
-      toast.error("An error occurred.");
+      toast.error(err.response?.data?.message || "An error occurred.");
     } finally {
       setLoading(false);
     }
@@ -153,25 +164,23 @@ export default function AddJuwellery() {
           required
         />
 
-        {/*Category Dropdown */}
+        {/* Category Dropdown */}
         <FormControl fullWidth required>
           <InputLabel>Category</InputLabel>
-  <Select
-    name="category"
-    value={juwellerryData.category}
-    onChange={handleChange}
-    label="Category"
-  >
-    <MenuItem value="">Select Category</MenuItem>
-    {categories.map((cat) => (
-      <MenuItem key={cat._id} value={cat._id}>
-        {cat.catName}
-      </MenuItem>
-    ))}
-  </Select>
-</FormControl>
-
-          
+          <Select
+            name="category"
+            value={juwellerryData.category}
+            onChange={handleChange}
+            label="Category"
+          >
+            <MenuItem value="">Select Category</MenuItem>
+            {categories.map((cat) => (
+              <MenuItem key={cat._id} value={cat._id}>
+                {cat.catName}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
         <TextField
           name="description"

@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import UploadBox from "../../Components/UploadBox";
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
 import { IoCloseOutline } from "react-icons/io5";
@@ -14,16 +13,21 @@ export default function AddJuwellerryCat() {
   const [previewImages, setPreviewImages] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Handle image file selection
+  const token = localStorage.getItem("token"); // get token for auth
+
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
-    setImages(files);
+
+    if (files.length + images.length > 1) {
+      toast.error("You can only upload up to 1 image.");
+      return;
+    }
 
     const previews = files.map(file => URL.createObjectURL(file));
-    setPreviewImages(previews);
+    setPreviewImages(prev => [...prev, ...previews]);
+    setImages(prev => [...prev, ...files]);
   };
 
-  // Remove image from preview list
   const handleRemoveImage = (index) => {
     const newImages = [...images];
     const newPreviews = [...previewImages];
@@ -33,53 +37,67 @@ export default function AddJuwellerryCat() {
     setPreviewImages(newPreviews);
   };
 
-  // Handle form submit
   const handleSubmit = async () => {
     if (!catName || images.length === 0) {
-      alert("Please enter a category name and upload at least one image.");
+      toast.error("Please enter a category name and upload at least one image.");
       return;
     }
 
-    try {
-      setLoading(true);
+    if (!token) {
+      toast.error("You must be logged in to perform this action.");
+      return;
+    }
 
-      // Step 1: Upload images to backend
+    setLoading(true);
+
+    try {
+      // ---------------- Upload Images ----------------
       const formData = new FormData();
       images.forEach(img => formData.append("images", img));
 
       const uploadRes = await axios.post(
-        import.meta.env.VITE_BACKEND_URL + "/api/jewelleryCat/uploadImages",
+        `${import.meta.env.VITE_BACKEND_URL}/api/jewelleryCat/uploadImages`,
         formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`, // attach token
           },
           withCredentials: true,
         }
       );
 
+      if (!uploadRes.data.success) {
+        throw new Error("Image upload failed");
+      }
+
       const uploadedImages = uploadRes.data.images;
 
-      // Step 2: Create the category
+      // ---------------- Create Category ----------------
       const createRes = await axios.post(
-        import.meta.env.VITE_BACKEND_URL + "/api/jewelleryCat/create",
+        `${import.meta.env.VITE_BACKEND_URL}/api/jewelleryCat/create`,
         {
           catName,
+          images: uploadedImages, // send uploaded image URLs to backend
         },
         {
+          headers: {
+            Authorization: `Bearer ${token}`, // attach token
+          },
           withCredentials: true,
         }
       );
 
-      toast.success("Category created successfully!");
-      // Clear form
-      setCatName("");
-      setImages([]);
-      setPreviewImages([]);
-      window.location.reload();
+      if (createRes.data.success) {
+        toast.success("Category created successfully!");
+        setCatName("");
+        setImages([]);
+        setPreviewImages([]);
+      }
+
     } catch (err) {
       console.error(err);
-      toast.error("Something went wrong. Check console.");
+      toast.error(err.response?.data?.message || err.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -103,17 +121,14 @@ export default function AddJuwellerryCat() {
                 value={catName}
                 onChange={(e) => setCatName(e.target.value)}
                 className="w-full h-[40px] border-2 border-[rgba(0,0,0,0.5)] focus:outline-none focus:border-primary rounded-sm p-3 text-sm"
+                placeholder="Enter category name"
               />
             </div>
           </div>
 
-          <br />
+          <h3 className="text-[18px] font-[500] mb-1 text-black mt-4">Category Images</h3>
 
-          <h3 className="text-[18px] font-[500] mb-1 text-black">Category Image</h3>
-
-          <br />
-
-          <div className="grid grid-cols-7 gap-4">
+          <div className="grid grid-cols-7 gap-4 mt-2">
             {previewImages.map((img, index) => (
               <div className="uploadBoxWrapper relative" key={index}>
                 <span
@@ -122,12 +137,11 @@ export default function AddJuwellerryCat() {
                 >
                   <IoCloseOutline className="text-white text-[17px]" />
                 </span>
-
-                <div className="uploadBox p-0 rounded-md overflow-hidden border border-dashed border-[rgba(0,0,0,0.5)] h-[150px] w-[100%] bg-gray-100 flex items-center justify-center flex-col relative">
+                <div className="uploadBox p-0 rounded-md overflow-hidden border border-dashed border-[rgba(0,0,0,0.5)] h-[150px] w-[100%] bg-gray-100 flex items-center justify-center relative">
                   <LazyLoadImage
                     className="w-full h-full object-cover"
                     effect="blur"
-                    alt={"preview"}
+                    alt="preview"
                     src={img}
                   />
                 </div>
@@ -135,7 +149,7 @@ export default function AddJuwellerryCat() {
             ))}
 
             <label className="uploadBoxWrapper cursor-pointer">
-              <div className="uploadBox p-0 rounded-md overflow-hidden border border-dashed border-[rgba(0,0,0,0.5)] h-[150px] w-[100%] bg-gray-100 flex items-center justify-center flex-col relative hover:bg-gray-200">
+              <div className="uploadBox p-0 rounded-md overflow-hidden border border-dashed border-[rgba(0,0,0,0.5)] h-[150px] w-[100%] bg-gray-100 flex items-center justify-center hover:bg-gray-200">
                 <span className="text-sm text-gray-600">+ Upload</span>
                 <input
                   type="file"
@@ -149,14 +163,13 @@ export default function AddJuwellerryCat() {
           </div>
         </div>
 
-        <br />
-        <br />
-
-        <div className="w-[250px]">
+        <div className="w-[250px] mt-5">
           <Button
             type="submit"
             className="btn-blue btn-lg w-full flex gap-2"
             disabled={loading}
+            variant="contained"
+            color="primary"
           >
             <MdOutlineFileUpload className="text-[25px] text-white" />
             {loading ? "Uploading..." : "Publish & View"}

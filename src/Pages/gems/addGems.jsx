@@ -25,6 +25,8 @@ export default function AddGems() {
   const [selectedCatName, setSelectedCatName] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const token = localStorage.getItem("token"); // Auth token
+
   // Fetch categories
   useEffect(() => {
     async function fetchCategories() {
@@ -40,7 +42,6 @@ export default function AddGems() {
         toast.error("Error fetching categories");
       }
     }
-
     fetchCategories();
   }, []);
 
@@ -48,7 +49,6 @@ export default function AddGems() {
     setGemData({ ...gemData, [e.target.name]: e.target.value });
   };
 
-  // Submit form with image upload
   const handleSubmit = async () => {
     const { name, price, weight, category } = gemData;
 
@@ -57,10 +57,19 @@ export default function AddGems() {
       return;
     }
 
-    try {
-      setLoading(true);
+    if (!token) {
+      toast.error("You must be logged in to perform this action.");
+      return;
+    }
 
-      // Step 1: Upload images
+    if (images.length > 5) {
+      toast.error("You can upload a maximum of 5 images.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // ---------------- Upload Images ----------------
       const formData = new FormData();
       images.forEach((img) => formData.append("images", img));
 
@@ -68,30 +77,34 @@ export default function AddGems() {
         `${import.meta.env.VITE_BACKEND_URL}/api/gem/uploadImages`,
         formData,
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: { 
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
           withCredentials: true,
         }
       );
 
-      const uploadedImageUrls = uploadRes.data.images;
-
-      if (!uploadRes.data.success || !uploadedImageUrls?.length) {
+      if (!uploadRes.data.success || !uploadRes.data.images?.length) {
         toast.error("Image upload failed.");
         setLoading(false);
         return;
       }
 
-      // Step 2: Submit gem data with image URLs
+      const uploadedImageUrls = uploadRes.data.images;
+
+      // ---------------- Submit Gem Data ----------------
       const res = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/gem/create`,
         { ...gemData, images: uploadedImageUrls },
-        { withCredentials: true }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        }
       );
 
       if (res.data.success) {
         toast.success("Gem created successfully!");
-
-        // Reset form
         setGemData({
           name: "",
           description: "",
@@ -102,13 +115,12 @@ export default function AddGems() {
         });
         setImages([]);
         setSelectedCatName("");
-        window.location.reload();
       } else {
         toast.error("Failed to create gem.");
       }
     } catch (err) {
       console.error(err);
-      toast.error("An error occurred.");
+      toast.error(err.response?.data?.message || "An error occurred.");
     } finally {
       setLoading(false);
     }

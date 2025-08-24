@@ -72,8 +72,11 @@ export default function GemCategoryList () {
   const handleDelete = async (id) => {
   if (!window.confirm("Are you sure you want to delete this category?")) return;
 
+  const token = localStorage.getItem("token")
+
   try {
     const res = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/gemCat/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
       withCredentials: true,
     });
 

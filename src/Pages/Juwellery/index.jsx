@@ -18,6 +18,7 @@ const columns = [
   { id: 'product', label: 'PRODUCT', minWidth: 150 },
   { id: 'category', label: 'CATEGORY', minWidth: 100 },
   { id: 'price', label: 'PRICE', minWidth: 100 },
+  { id: 'sales', label: 'SALES', minWidth: 150 },
   { id: 'weight', label: 'WEIGHT (g)', minWidth: 100 },
   { id: 'stock', label: 'STOCK', minWidth: 100 },
   { id: 'action', label: 'ACTION', minWidth: 120 },
@@ -25,7 +26,6 @@ const columns = [
 
 export default function JewelleryList() {
   const context = useContext(Mycontext);
-
   const [categoryFilterValue, setCategoryFilterValue] = useState('');
   const [searchValue, setSearchValue] = useState('');
   const [items, setItems] = useState([]);
@@ -39,9 +39,7 @@ export default function JewelleryList() {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get(`${baseURL}/api/jewelleryCat`, {
-        withCredentials: true,
-      });
+      const res = await axios.get(`${baseURL}/api/jewelleryCat`, { withCredentials: true });
       if (res.data.success) setCategories(res.data.categories);
     } catch (err) {
       console.error("Failed to fetch categories", err);
@@ -83,41 +81,26 @@ export default function JewelleryList() {
   }, [categoryFilterValue, searchValue, page, rowsPerPage]);
 
   const handleDelete = async (id) => {
-  const confirm = window.confirm("Are you sure you want to delete this item?");
-  if (!confirm) return;
+    const confirm = window.confirm("Are you sure you want to delete this item?");
+    if (!confirm) return;
+    const token = localStorage.getItem("token");
 
-  try {
-    const res = await axios.delete(`${baseURL}/api/jewellery/${id}`, {
-      withCredentials: true,
-    });
+    try {
+      const res = await axios.delete(`${baseURL}/api/jewellery/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
+      });
 
-    if (res.data.success) {
-      toast.success("Item deleted successfully.");
-      fetchJewellery(); // Refresh list
-    } else {
-      toast.error(res.data.message || "Failed to delete item.");
+      if (res.data.success) {
+        toast.success("Item deleted successfully.");
+        fetchJewellery();
+      } else {
+        toast.error(res.data.message || "Failed to delete item.");
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      toast.error("Something went wrong while deleting.");
     }
-  } catch (err) {
-    console.error("Delete error:", err);
-    toast.error("Something went wrong while deleting.");
-  }
-};
-
-
-  const handleChangePage = (event, newPage) => setPage(newPage);
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(+event.target.value);
-    setPage(0);
-  };
-
-  const handleChangeCatFilter = (event) => {
-    setCategoryFilterValue(event.target.value);
-    setPage(0);
-  };
-
-  const handleSearch = (val) => {
-    setSearchValue(val);
-    setPage(0);
   };
 
   return (
@@ -129,10 +112,7 @@ export default function JewelleryList() {
           <Button
             className="btn-blue !text-white btn-sm"
             onClick={() =>
-              context.setIsOpentFullScreenPanel({
-                open: true,
-                model: "Add Jewellery",
-              })
+              context.setIsOpentFullScreenPanel({ open: true, model: "Add Juwellery" })
             }
           >
             Add Jewellery
@@ -144,52 +124,33 @@ export default function JewelleryList() {
         <div className="flex items-center w-full px-5 justify-between">
           <div className="col w-[20%]">
             <h4 className="font-[600] text-[13px] mb-2">Category By</h4>
-            <Select
-              className="w-full"
-              size="small"
-              value={categoryFilterValue}
-              onChange={handleChangeCatFilter}
-            >
+            <Select size="small" value={categoryFilterValue} onChange={(e) => { setCategoryFilterValue(e.target.value); setPage(0); }} fullWidth>
               <MenuItem value=""><em>All Categories</em></MenuItem>
-              {categories.map((cat) => (
-                <MenuItem key={cat._id} value={cat._id}>
-                  {cat.catName}
-                </MenuItem>
-              ))}
+              {categories.map((cat) => <MenuItem key={cat._id} value={cat._id}>{cat.catName}</MenuItem>)}
             </Select>
           </div>
 
           <div className="col w-[20%] ml-auto">
-            <SearchBox onSearch={handleSearch} />
+            <SearchBox onSearch={(val) => { setSearchValue(val); setPage(0); }} />
           </div>
         </div>
 
         <div className="relative overflow-x-auto mt-5 pb-5">
+          {loading && <LinearProgress className="mb-2" />}
+
           <TableContainer sx={{ maxHeight: 440 }}>
             <Table stickyHeader aria-label="sticky table">
               <TableHead>
                 <TableRow>
                   <TableCell><Checkbox {...label} size="small" /></TableCell>
-                  {columns.map((column) => (
-                    <TableCell key={column.id} style={{ minWidth: column.minWidth }}>
-                      {column.label}
-                    </TableCell>
-                  ))}
+                  {columns.map((column) => <TableCell key={column.id} style={{ minWidth: column.minWidth }}>{column.label}</TableCell>)}
                 </TableRow>
               </TableHead>
 
               <TableBody>
-                {loading ? (
+                {!loading && items.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={columns.length + 1} align="center">
-                      Loading...
-                    </TableCell>
-                  </TableRow>
-                ) : items.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={columns.length + 1} align="center">
-                      No jewellery found.
-                    </TableCell>
+                    <TableCell colSpan={columns.length + 1} align="center">No jewellery found.</TableCell>
                   </TableRow>
                 ) : (
                   items.map((item) => (
@@ -212,22 +173,33 @@ export default function JewelleryList() {
                       </TableCell>
                       <TableCell>{item.category?.catName || "No Category"}</TableCell>
                       <TableCell>Rs: {item.price}</TableCell>
+
+                      {/* Sales Column with Progress */}
+                      <TableCell>
+                        <div className="flex flex-col justify-center">
+                          <p className="text-[13px] font-[500] mb-1">{item.sales || 0} sales</p>
+                          <LinearProgress
+                            variant="determinate"
+                            value={Math.min(item.sales, 100)}
+                            sx={{
+                              height: 8,
+                              borderRadius: 5,
+                              backgroundColor: "#f2f2f2",
+                              "& .MuiLinearProgress-bar": {
+                                backgroundColor: item.sales > 70 ? "#22c55e" : item.sales > 30 ? "#facc15" : "#ef4444",
+                              },
+                            }}
+                          />
+                        </div>
+                      </TableCell>
+
                       <TableCell>{item.weight} g</TableCell>
                       <TableCell>{item.stock}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <Button className="!w-[35px] !h-[35px] !bg-[#f1f1f1] !border !rounded-full hover:!bg-[#ccc]">
-                            <AiOutlineEdit className="text-[20px] text-black" />
-                          </Button>
-                          <Button className="!w-[35px] !h-[35px] !bg-[#f1f1f1] !border !rounded-full hover:!bg-[#ccc]">
-                            <LuEye className="text-[20px] text-black" />
-                          </Button>
-                          <Button
-                            className="!w-[35px] !h-[35px] !bg-[#f1f1f1] !border !rounded-full hover:!bg-[#ccc]"
-                            onClick={() => handleDelete(item._id)}
-                          >
-                            <VscTrash className="text-[20px] text-red-700" />
-                          </Button>
+                          <Button className="!w-[35px] !h-[35px] !bg-[#f1f1f1] !border !rounded-full hover:!bg-[#ccc]"><AiOutlineEdit className="text-[20px]" /></Button>
+                          <Button className="!w-[35px] !h-[35px] !bg-[#f1f1f1] !border !rounded-full hover:!bg-[#ccc]"><LuEye className="text-[20px]" /></Button>
+                          <Button className="!w-[35px] !h-[35px] !bg-[#f1f1f1] !border !rounded-full hover:!bg-[#ccc]" onClick={() => handleDelete(item._id)}><VscTrash className="text-[20px] text-red-700" /></Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -243,8 +215,8 @@ export default function JewelleryList() {
             count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => { setRowsPerPage(+e.target.value); setPage(0); }}
           />
         </div>
       </div>

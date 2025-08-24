@@ -120,9 +120,11 @@ export default function Gems() {
 
   const handleDeleteGem = async (id) => {
     if (!window.confirm("Are you sure you want to delete this gem?")) return;
+    const token = localStorage.getItem("token")
 
     try {
       const res = await axios.delete(`${baseURL}/api/gem/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
 
@@ -211,103 +213,87 @@ export default function Gems() {
               </TableHead>
 
               <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length + 1}
-                      align="center"
-                    >
-                      Loading...
-                    </TableCell>
-                  </TableRow>
-                ) : gems.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length + 1}
-                      align="center"
-                    >
-                      No gems found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  gems.map((gem) => (
-                    <TableRow key={gem._id}>
-                      <TableCell>
-                        <Checkbox {...label} size="small" />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-4 w-[300px]">
-                          <div className="img w-[65px] h-[65px] rounded-md overflow-hidden group">
-                            <img
-                              src={
-                                gem.images?.[0]?.url ||
-                                "https://via.placeholder.com/65"
-                              }
-                              alt={gem.name}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-all"
-                            />
-                          </div>
-                          <div className="info w-[75%]">
-                            <h3 className="font-[600] text-[12px] leading-4">
-                              {gem.name}
-                            </h3>
-                            <span className="text-[12px]">
-                              {gem.description || "No description"}
-                            </span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {gem.category?.catName || "No Category"}
-                      </TableCell>
-                      <TableCell>
-                        {gem.category?.name || "No Subcategory"}
-                      </TableCell>
-                      <TableCell>Rs: {gem.price}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-col justify-center">
-                          <p className="text-[13px] font-[500] mb-1">
-                            {gem.sales} sales
-                          </p>
-                          <LinearProgress
-                            variant="determinate"
-                            value={Math.min(gem.sales, 100)}
-                            sx={{
-                              height: 8,
-                              borderRadius: 5,
-                              backgroundColor: "#f2f2f2",
-                              "& .MuiLinearProgress-bar": {
-                                backgroundColor:
-                                  gem.sales > 70
-                                    ? "#22c55e"
-                                    : gem.sales > 30
-                                    ? "#facc15"
-                                    : "#ef4444",
-                              },
-                            }}
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button className="!w-[35px] !h-[35px] !bg-[#f1f1f1] !border !rounded-full hover:!bg-[#ccc]">
-                            <AiOutlineEdit className="text-[20px] text-black" />
-                          </Button>
-                          <Button className="!w-[35px] !h-[35px] !bg-[#f1f1f1] !border !rounded-full hover:!bg-[#ccc]">
-                            <LuEye className="text-[20px] text-black" />
-                          </Button>
-                          <Button
-                            className="!w-[35px] !h-[35px] !bg-[#f1f1f1] !border !rounded-full hover:!bg-[#ccc]"
-                            onClick={() => handleDeleteGem(gem._id)}
-                          >
-                            <VscTrash className="text-[20px] text-red-700" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
+  {loading ? (
+    <TableRow>
+      <TableCell colSpan={columns.length + 1} style={{ padding: 0 }}>
+        <LinearProgress
+          sx={{ height: 4, borderRadius: 2, width: '100%' }}
+        />
+      </TableCell>
+    </TableRow>
+  ) : gems.length === 0 ? (
+    <TableRow>
+      <TableCell colSpan={columns.length + 1} align="center">
+        No gems found.
+      </TableCell>
+    </TableRow>
+  ) : (
+    gems.map((gem) => (
+      <TableRow key={gem._id}>
+        <TableCell>
+          <Checkbox {...label} size="small" />
+        </TableCell>
+        <TableCell>
+          <div className="flex items-center gap-4 w-[300px]">
+            <div className="img w-[65px] h-[65px] rounded-md overflow-hidden group">
+              <img
+                src={gem.images?.[0]?.url || "https://via.placeholder.com/65"}
+                alt={gem.name}
+                className="w-full h-full object-cover group-hover:scale-105 transition-all"
+              />
+            </div>
+            <div className="info w-[75%]">
+              <h3 className="font-[600] text-[12px] leading-4">{gem.name}</h3>
+              <span className="text-[12px]">{gem.description || "No description"}</span>
+            </div>
+          </div>
+        </TableCell>
+        <TableCell>{gem.category?.catName || "No Category"}</TableCell>
+        <TableCell>{gem.category?.name || "No Subcategory"}</TableCell>
+        <TableCell>Rs: {gem.price}</TableCell>
+        <TableCell>
+          <div className="flex flex-col justify-center">
+            <p className="text-[13px] font-[500] mb-1">{gem.sales} sales</p>
+            <LinearProgress
+              variant="determinate"
+              value={Math.min(gem.sales, 100)}
+              sx={{
+                height: 8,
+                borderRadius: 5,
+                backgroundColor: "#f2f2f2",
+                "& .MuiLinearProgress-bar": {
+                  backgroundColor:
+                    gem.sales > 70
+                      ? "#22c55e"
+                      : gem.sales > 30
+                      ? "#facc15"
+                      : "#ef4444",
+                },
+              }}
+            />
+          </div>
+        </TableCell>
+        <TableCell>
+          <div className="flex items-center gap-1">
+            <Button className="!w-[35px] !h-[35px] !bg-[#f1f1f1] !border !rounded-full hover:!bg-[#ccc]">
+              <AiOutlineEdit className="text-[20px] text-black" />
+            </Button>
+            <Button className="!w-[35px] !h-[35px] !bg-[#f1f1f1] !border !rounded-full hover:!bg-[#ccc]">
+              <LuEye className="text-[20px] text-black" />
+            </Button>
+            <Button
+              className="!w-[35px] !h-[35px] !bg-[#f1f1f1] !border !rounded-full hover:!bg-[#ccc]"
+              onClick={() => handleDeleteGem(gem._id)}
+            >
+              <VscTrash className="text-[20px] text-red-700" />
+            </Button>
+          </div>
+        </TableCell>
+      </TableRow>
+    ))
+  )}
+</TableBody>
+
             </Table>
           </TableContainer>
 
